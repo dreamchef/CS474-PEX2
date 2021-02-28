@@ -12,7 +12,7 @@
 void draw(
 	int width,
 	int height,
-	HDC &img,
+	HDC& img,
 	Scene scene)
 {
 
@@ -20,7 +20,7 @@ void draw(
 	face.resize(3);
 	float r, g, b;
 	float x0, x1, y, z, bufWatcher;
-	float DeltaX0, DeltaX1;  
+	float DeltaX0, DeltaX1;
 
 	buf2d depthBuffer;
 
@@ -33,9 +33,9 @@ void draw(
 	for (int i = 0; i < scene.model.face.size(); i++) {
 
 		// Read face color
-		r = scene.model.faceColor.at((scene.model.face.at(i).at(0))).x*255;
-		g = scene.model.faceColor.at((scene.model.face.at(i).at(0))).y*255;
-		b = scene.model.faceColor.at((scene.model.face.at(i).at(0))).z*255;
+		r = scene.model.faceColor.at((scene.model.face.at(i).at(0))).x * 255;
+		g = scene.model.faceColor.at((scene.model.face.at(i).at(0))).y * 255;
+		b = scene.model.faceColor.at((scene.model.face.at(i).at(0))).z * 255;
 
 		// Make copy of vertices vector
 		face.at(0) = scene.model.vertex.at(scene.model.face.at(i).at(0));
@@ -55,7 +55,7 @@ void draw(
 
 		// Set starting scanline position
 		x0 = face.at(0).x;
-		x1 = face.at(0).x; 
+		x1 = face.at(0).x;
 		y = face.at(0).y;
 		z = face.at(0).z;
 
@@ -65,43 +65,41 @@ void draw(
 		// Set second delta for upper half
 		DeltaX1 = (face.at(0).x - face.at(1).x) / (face.at(0).y - face.at(1).y);
 
-		if (DeltaX1 + x1 > 0 && DeltaX1 + x1 < width && DeltaX0 + x0 > 0 && DeltaX0 + x0 < width) { // Check for horizontal edge
-			// Draw upper triangle
-			while (y < face.at(1).y) {
-				for (int x = min(x0, x1); x < max(x0, x1); x++) {
-					if (z >= depthBuffer[x][(int)y]) {
-						SetPixelV(img, x, (int)y, RGB(r, g, b));
-						bufWatcher = depthBuffer[x][(int)y];
-						depthBuffer[x][(int)y] = z;
-					}
-				}
-				x0 += DeltaX0;
-				x1 += DeltaX1;
-				y++;
-			}
-		}
-		else {
-			x1 = face.at(1).x;
-		}
+		//max(x1+DeltaX1,x0+DeltaX0) < max(face.at(0).x, face.at(1).x) && min(x1 + DeltaX1, x0 + DeltaX0) > min(face.at(0).x, face.at(1).x)
 
+		// Draw upper triangle
+		while (y < face.at(1).y) {
+			for (int x = min(x0, x1); x < max(x0, x1); x++) {
+				if (z >= depthBuffer[x][(int)y]) {
+					SetPixelV(img, x, (int)y, RGB(r, g, b));
+					bufWatcher = depthBuffer[x][(int)y];
+					depthBuffer[x][(int)y] = z;
+				}
+			}
+			x0 += DeltaX0;
+			x1 += DeltaX1;
+			y++;
+		}
+		
+		x1 = face.at(1).x;
+		
 		// Set second delta for lower half
 		DeltaX1 = (face.at(1).x - face.at(2).x) / (face.at(1).y - face.at(2).y);
-		
-		if (DeltaX1+x1 > 0 && DeltaX1+x1 < width && DeltaX0+x0 > 0 && DeltaX0+x0 < width) { // Check for horizontal edge	
-			
-			// Draw lower triangle
-			while (y < face.at(2).y) {
-				for (int x = min(x0, x1); x < max(x0, x1); x++) {
-					if (z >= depthBuffer[x][(int)y]) {
-						SetPixelV(img, x, (int)y, RGB(r, g, b));
-						bufWatcher = depthBuffer[x][(int)y];
-						depthBuffer[x][(int)y] = z;
-					}
+
+		//max(x1 + DeltaX1, x0 + DeltaX0) < max(face.at(0).x, face.at(1).x) && min(x1 + DeltaX1, x0 + DeltaX0) > min(face.at(0).x, face.at(1).x)	
+
+		// Draw lower triangle
+		while (y < face.at(2).y) {
+			for (int x = min(x0, x1); x < max(x0, x1); x++) {
+				if (z >= depthBuffer[x][(int)y]) {
+					SetPixelV(img, x, (int)y, RGB(r, g, b));
+					bufWatcher = depthBuffer[x][(int)y];
+					depthBuffer[x][(int)y] = z;
 				}
-				x0 += DeltaX0;
-				x1 += DeltaX1;
-				y++;
 			}
+			x0 += DeltaX0;
+			x1 += DeltaX1;
+			y++;
 		}
 	}
 }
