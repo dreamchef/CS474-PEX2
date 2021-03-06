@@ -50,6 +50,10 @@ void draw(
 		g = scene.model.faceColor.at((scene.model.face.at(i).at(0))).y * 255;
 		b = scene.model.faceColor.at((scene.model.face.at(i).at(0))).z * 255;
 
+		//r = 0;
+		//g = 0;
+		//b = 255;
+
 		// TODO: Read other vertex colors for interpolation in scanline stage
 
 		// Copy faces from scene argument into local variable
@@ -61,7 +65,7 @@ void draw(
 		vec4f camLook = scene.cameraLookAt;
 		vec4f camUp = scene.cameraUp;
 
-		// TODO: Viewing transformation (using camera information)
+		// World to camera transformation
 
 		vec4f n = camPos - camLook;
 		
@@ -83,29 +87,45 @@ void draw(
 		v.y /= vNorm;
 		v.z /= vNorm;
 		
+		/*
+		[ ux vx nx  0 ]-1 [ ux uy yz 0 ]
+		[ uy vy ny  0 ]	= [ vx vy vz 0 ]
+		[ uz vz nz  0 ]	  [ nz ny nz 0 ]
+		[ 0  0  0   1 ]	  [ 0  0  0  1 ]
 
-		//1: Translate camera to origin
-		//2: Rotate Look_at to align with -Z axis.
-		//3: Rotate up to align with Y axis.
+		For each vertex in the face...
 
+				[ ux uy yz 0]	[ 1 0 0 -camPosx ]
+		Tcw =	[ vx vy vz 0] * [ 0 1 0 -camPosy ]
+				[ nz ny nz 0]	[ 0 0 1 -camPosz ]
+				[ 0  0  0  1]	[ 0 0 0 1		 ]
 
+				[ face.at(v).x ]
+		Xw =	[ face.at(v).y ]
+				[ face.at(v).z ]
+				[ 1			   ]
 
+		*/
 
-		face.at(0).x = ;
-		face.at(0).y = ;
+		for(int j=0; j<3; j++) { // For each vertex in face
+			
+			// Translation matrix
+			face.at(j).x = face.at(j).x - camPos.x;
+			face.at(j).y = face.at(j).y - camPos.y;
+			face.at(j).z = face.at(j).z - camPos.z;
 
-		face.at(1).x = ;
-		face.at(1).y = ;
-
-		face.at(2).x = ;
-		face.at(2).y = ;
+			// Rotation matrix
+			face.at(j).x = face.at(j).x * u.x + face.at(j).y * u.y + face.at(j).z * u.z;
+			face.at(j).y = face.at(j).x * v.x + face.at(j).y * v.y + face.at(j).z * v.z;
+			face.at(j).z = face.at(j).x * n.x + face.at(j).y * n.y + face.at(j).z * n.z;
+		}
 
 		// TODO: Perspective Projection transformation (using cam info)
 
 		// Device transformation
-		face.at(0).y = 800 - face.at(0).y;
-		face.at(1).y = 800 - face.at(1).y;
-		face.at(2).y = 800 - face.at(2).y;
+		//face.at(0).y = 800 - face.at(0).y;
+		//face.at(1).y = 800 - face.at(1).y;
+		//face.at(2).y = 800 - face.at(2).y;
 
 		// Sort vertices by y-position
 		auto compareVertices = [](vec4f a, vec4f b) { // std sort comparison function (y-pos)
