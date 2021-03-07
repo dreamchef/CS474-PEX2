@@ -7,6 +7,7 @@
 #include "scene.h"
 #include "definitions.h"
 #include "mat4.h"
+#include <math.h>
 
 // 2D Array Struct definition to hold float values.
 #ifndef BUF2D

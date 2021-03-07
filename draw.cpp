@@ -1,6 +1,5 @@
 #include "draw.h"
 #include <iostream>
-#include <math.h>;
 
 /////////////////
 // Function   : draw()
@@ -23,6 +22,14 @@ void draw(
 	float z, bufWatcher;
 	buf2d depthBuffer;
 	depthBuffer.init(width, height, -1000);
+
+	// Camera variables/constants
+	vec4f camPos = scene.cameraLocation;
+	vec4f camLook = scene.cameraLookAt;
+	vec4f camUp = scene.cameraUp;
+	float FOV = scene.cameraFOV;
+	float camNear = 0.01;
+	float camFar = 100;
 
 	// FACE INSTANCE VARIABLES =================
 
@@ -60,10 +67,6 @@ void draw(
 		face.at(0) = scene.model.vertex.at(scene.model.face.at(i).at(0));
 		face.at(1) = scene.model.vertex.at(scene.model.face.at(i).at(1));
 		face.at(2) = scene.model.vertex.at(scene.model.face.at(i).at(2));
-
-		vec4f camPos = scene.cameraLocation;
-		vec4f camLook = scene.cameraLookAt;
-		vec4f camUp = scene.cameraUp;
 
 		// World to camera transformation
 
@@ -104,7 +107,6 @@ void draw(
 		Xw =	[ face.at(v).y ]
 				[ face.at(v).z ]
 				[ 1			   ]
-
 		*/
 
 		for(int j=0; j<3; j++) { // For each vertex in face
@@ -120,7 +122,15 @@ void draw(
 			face.at(j).z = face.at(j).x * n.x + face.at(j).y * n.y + face.at(j).z * n.z;
 		}
 
-		// TODO: Perspective Projection transformation (using cam info)
+		// Perspective Projection transformation (using cam info)
+		
+		for (int j = 0; j < 3; j++) { // For each vertex in face
+
+			face.at(j).x = face.at(j).x / tan(FOV * PI / 360);
+			face.at(j).y = face.at(j).y / tan(FOV * PI / 360);
+			face.at(j).z = face.at(j).z * ((camFar + camNear)/(camFar - camNear)) + face.at(j).w * ((2 * camFar * camNear) / (camFar - camNear));
+			face.at(j).w = -face.at(j).z;
+		}
 
 		// Device transformation
 		//face.at(0).y = 800 - face.at(0).y;
