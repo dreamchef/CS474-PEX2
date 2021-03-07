@@ -57,17 +57,17 @@ void draw(
 		g = scene.model.faceColor.at((scene.model.face.at(i).at(0))).y * 255;
 		b = scene.model.faceColor.at((scene.model.face.at(i).at(0))).z * 255;
 
-		// TODO: Read other vertex colors for interpolation in scanline stage
+		// TODO: Read other vertex colors for interpolation
 
 		// Copy faces from scene argument into local variable
 		face.at(0) = scene.model.vertex.at(scene.model.face.at(i).at(0));
 		face.at(1) = scene.model.vertex.at(scene.model.face.at(i).at(1));
 		face.at(2) = scene.model.vertex.at(scene.model.face.at(i).at(2));
 
-		// World to camera transformation
+		// WORLD TO CAMERA TRANSFORMATION
 
 		vec4f n = camPos - camLook;
-		
+
 		vec4f u;
 		u.x = (camUp.x * n.y) - (camUp.y * n.x);
 		u.y = (camUp.y * n.z) - (camUp.z * n.y);
@@ -97,9 +97,7 @@ void draw(
 		for(int j=0; j<3; j++) {
 			
 			// Translation matrix
-			face.at(j).x = face.at(j).x - camPos.x;
-			face.at(j).y = face.at(j).y - camPos.y;
-			face.at(j).z = face.at(j).z - camPos.z;
+			face.at(j) = face.at(j) - camPos;
 
 			// Rotation matrix
 			face.at(j).x = face.at(j).x * u.x + face.at(j).y * u.y + face.at(j).z * u.z;
@@ -107,7 +105,7 @@ void draw(
 			face.at(j).z = face.at(j).x * n.x + face.at(j).y * n.y + face.at(j).z * n.z;
 		}
 
-		// Perspective Projection transformation
+		// PERSPECTIVE PROJECTION TRANSFORMATION
 		
 		for (int j = 0; j < 3; j++) { // For each vertex in face
 
@@ -117,7 +115,8 @@ void draw(
 			face.at(j).w = -face.at(j).z;
 		}
 	
-		// Viewport transformation
+		// VIEWPORT TRANSFORMATION
+
 		for (int j = 0; j < 3; j++) { // For each vertex in face
 
 			// Scale
@@ -129,7 +128,7 @@ void draw(
 			face.at(j).y = face.at(j).y + face.at(j).w * height * 0.5;
 		}
 
-		// Device transformation
+		// DEVICE TRANSFORMATION
 		for (int j = 0; j < 3; j++) { // For each vertex in face
 
 			// Scale
@@ -155,8 +154,6 @@ void draw(
 		// Set delta-1 for upper half
 		DeltaX1 = (face.at(0).x - face.at(1).x) / (face.at(0).y - face.at(1).y);
 
-		//max(x1+DeltaX1,x0+DeltaX0) < max(face.at(0).x, face.at(1).x) && min(x1 + DeltaX1, x0 + DeltaX0) > min(face.at(0).x, face.at(1).x)
-
 		// Draw upper triangle
 		while (y <= face.at(1).y) { // while above middle vertex
 
@@ -181,8 +178,6 @@ void draw(
 		
 		// Set delta-1 for lower half
 		DeltaX1 = (face.at(1).x - face.at(2).x) / (face.at(1).y - face.at(2).y);
-
-		//max(x1 + DeltaX1, x0 + DeltaX0) < max(face.at(0).x, face.at(1).x) && min(x1 + DeltaX1, x0 + DeltaX0) > min(face.at(0).x, face.at(1).x)	
 
 		// Draw lower triangle
 		while (y <= face.at(2).y) {
