@@ -57,10 +57,6 @@ void draw(
 		g = scene.model.faceColor.at((scene.model.face.at(i).at(0))).y * 255;
 		b = scene.model.faceColor.at((scene.model.face.at(i).at(0))).z * 255;
 
-		//r = 0;
-		//g = 0;
-		//b = 255;
-
 		// TODO: Read other vertex colors for interpolation in scanline stage
 
 		// Copy faces from scene argument into local variable
@@ -91,25 +87,14 @@ void draw(
 		v.z /= vNorm;
 		
 		/*
-		[ ux vx nx  0 ]-1 [ ux uy yz 0 ]
-		[ uy vy ny  0 ]	= [ vx vy vz 0 ]
-		[ uz vz nz  0 ]	  [ nz ny nz 0 ]
-		[ 0  0  0   1 ]	  [ 0  0  0  1 ]
-
 		For each vertex in the face...
 
 				[ ux uy yz 0]	[ 1 0 0 -camPosx ]
 		Tcw =	[ vx vy vz 0] * [ 0 1 0 -camPosy ]
 				[ nz ny nz 0]	[ 0 0 1 -camPosz ]
 				[ 0  0  0  1]	[ 0 0 0 1		 ]
-
-				[ face.at(v).x ]
-		Xw =	[ face.at(v).y ]
-				[ face.at(v).z ]
-				[ 1			   ]
 		*/
-
-		for(int j=0; j<3; j++) { // For each vertex in face
+		for(int j=0; j<3; j++) {
 			
 			// Translation matrix
 			face.at(j).x = face.at(j).x - camPos.x;
@@ -122,7 +107,7 @@ void draw(
 			face.at(j).z = face.at(j).x * n.x + face.at(j).y * n.y + face.at(j).z * n.z;
 		}
 
-		// Perspective Projection transformation (using cam info)
+		// Perspective Projection transformation
 		
 		for (int j = 0; j < 3; j++) { // For each vertex in face
 
@@ -131,11 +116,26 @@ void draw(
 			face.at(j).z = face.at(j).z * ((camFar + camNear)/(camFar - camNear)) + face.at(j).w * ((2 * camFar * camNear) / (camFar - camNear));
 			face.at(j).w = -face.at(j).z;
 		}
+	
+		// Viewport transformation
+		for (int j = 0; j < 3; j++) { // For each vertex in face
+
+			// Scale
+			face.at(j).x = face.at(j).x * width * 0.5;
+			face.at(j).y = face.at(j).y * height * 0.5;
+
+			//Offset
+			face.at(j).x = face.at(j).x + face.at(j).w * width * 0.5;
+			face.at(j).y = face.at(j).y + face.at(j).w * height * 0.5;
+		}
 
 		// Device transformation
-		//face.at(0).y = 800 - face.at(0).y;
-		//face.at(1).y = 800 - face.at(1).y;
-		//face.at(2).y = 800 - face.at(2).y;
+		for (int j = 0; j < 3; j++) { // For each vertex in face
+
+			// Scale
+			face.at(j).x = face.at(j).x / 10;
+			face.at(j).y = face.at(j).y / 10;
+		}
 
 		// Sort vertices by y-position
 		auto compareVertices = [](vec4f a, vec4f b) { // std sort comparison function (y-pos)
@@ -162,10 +162,12 @@ void draw(
 
 			for (int x = min(x0, x1); x < max(x0, x1); x++) { // iterate across scanline
 
-				if (z >= depthBuffer[x][(int)y]) {
-					SetPixelV(img, x, (int)y, RGB(r, g, b)); //TODO: interpolate exact color (use lighting info)
-					bufWatcher = depthBuffer[x][(int)y];
-					depthBuffer[x][(int)y] = z;
+				if (x < width && y < height) {
+					if (z >= depthBuffer[x][(int)y]) {
+						SetPixelV(img, x, (int)y, RGB(r, g, b)); //TODO: interpolate exact color (use lighting info)
+						//bufWatcher = depthBuffer[x][(int)y];
+						depthBuffer[x][(int)y] = z;
+					}
 				}
 			}
 			// adjust deltas
@@ -185,10 +187,13 @@ void draw(
 		// Draw lower triangle
 		while (y <= face.at(2).y) {
 			for (int x = min(x0, x1); x < max(x0, x1); x++) {
-				if (z >= depthBuffer[x][(int)y]) {
-					SetPixelV(img, x, (int)y, RGB(r, g, b));
-					bufWatcher = depthBuffer[x][(int)y];
-					depthBuffer[x][(int)y] = z;
+				
+				if (x < width && y < height) {
+					if (z >= depthBuffer[x][(int)y]) {
+						SetPixelV(img, x, (int)y, RGB(r, g, b));
+						//bufWatcher = depthBuffer[x][(int)y];
+						depthBuffer[x][(int)y] = z;
+					}
 				}
 			}
 			x0 += DeltaX0;
